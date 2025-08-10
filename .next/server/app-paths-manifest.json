@@ -6,5 +6,6 @@
   "/resources/page": "app/resources/page.js",
   "/themes/page": "app/themes/page.js",
   "/music/page": "app/music/page.js",
-  "/music/upload/page": "app/music/upload/page.js"
+  "/music/upload/page": "app/music/upload/page.js",
+  "/music/playlist/page": "app/music/playlist/page.js"
 }
