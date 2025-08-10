@@ -3,5 +3,6 @@
   "/page": "app/page.js",
   "/code/page": "app/code/page.js",
   "/music/page": "app/music/page.js",
-  "/music/spotify/page": "app/music/spotify/page.js"
+  "/music/spotify/page": "app/music/spotify/page.js",
+  "/code/create/page": "app/code/create/page.js"
 }
