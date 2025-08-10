@@ -4,5 +4,6 @@
   "/music/spotify/page": "app/music/spotify/page.js",
   "/code/create/page": "app/code/create/page.js",
   "/resources/page": "app/resources/page.js",
-  "/themes/page": "app/themes/page.js"
+  "/themes/page": "app/themes/page.js",
+  "/music/page": "app/music/page.js"
 }
