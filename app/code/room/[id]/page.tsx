@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import io, { Socket } from 'socket.io-client';
 import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -9,7 +9,11 @@ import ThemeSwitcher from '@/components/theme/theme-switcher';
 
 const Monaco = dynamic(() => import('@/components/editor/monaco-editor'), { ssr: false });
 
-let socket: Socket | null = null;
+type ChatMessage = { 
+  user: string; 
+  text: string; 
+  timestamp?: string; 
+};
 
 export default function CodeRoom({ params }: { params: { id: string } }) {
   const { id } = params;
@@ -17,41 +21,69 @@ export default function CodeRoom({ params }: { params: { id: string } }) {
   const roomName = searchParams.get('name') || `Room ${id}`;
 
   const [code, setCode] = useState('// Start coding...');
-  const [chat, setChat] = useState<{ user: string; text: string }[]>([]);
+  const [chat, setChat] = useState<ChatMessage[]>([]);
   const [msg, setMsg] = useState('');
+  const [isConnected, setIsConnected] = useState(false);
+  const [userCount, setUserCount] = useState(0);
+  const socketRef = useRef<Socket | null>(null);
 
+  const onCodeChange = useCallback((value: string) => {
+    setCode(value);
+    socketRef.current?.emit('code:update', { roomId: id, code: value });
+  }, [id]);
   useEffect(() => {
-    socket = io('/', { path: '/api/socket/io' });
-    socket.emit('join', { roomId: id });
+    socketRef.current = io('/', { 
+      path: '/api/socket/io',
+      transports: ['websocket', 'polling']
+    });
+    
+    const socket = socketRef.current;
+    
+    socket.on('connect', () => {
+      setIsConnected(true);
+      socket.emit('join', { roomId: id });
+    });
+    
+    socket.on('disconnect', () => {
+      setIsConnected(false);
+    });
 
-    socket.on('code:update', (incoming: string) => setCode(incoming));
-    socket.on('chat:new', (payload: { user: string; text: string }) =>
-      setChat((c) => [...c, payload])
+    socket.on('code:update', (incoming: string) => {
+      setCode(incoming);
+    });
+    
+    socket.on('chat:new', (payload: ChatMessage) =>
+      setChat((prev) => [...prev, payload])
     );
 
     return () => {
-      socket?.emit('leave', { roomId: id });
-      socket?.disconnect();
+      socket.emit('leave', { roomId: id });
+      socket.disconnect();
     };
   }, [id]);
 
-  const onCodeChange = (value: string) => {
-    setCode(value);
-    socket?.emit('code:update', { roomId: id, code: value });
-  };
-
-  const send = () => {
+  const send = useCallback(() => {
     if (!msg.trim()) return;
     const payload = { user: 'Guest', text: msg };
-    socket?.emit('chat:new', { roomId: id, ...payload });
+    socketRef.current?.emit('chat:new', { roomId: id, ...payload });
+    setChat((prev) => [...prev, { ...payload, timestamp: new Date().toISOString() }]);
     setMsg('');
-  };
+  }, [msg, id]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-[calc(100vh-100px)]">
       <div className="lg:col-span-2 glass rounded-lg p-2 flex flex-col">
         <div className="flex items-center justify-between px-2 py-1">
-          <h2 className="font-poppins">{roomName}</h2>
+          <div>
+            <h2 className="font-poppins">{roomName}</h2>
+            <div className="text-xs opacity-60">
+              {isConnected ? (
+                <span className="text-green-400">● Connected</span>
+              ) : (
+                <span className="text-red-400">● Disconnected</span>
+              )}
+            </div>
+          </div>
           <div className="flex items-center gap-2">
             <ThemeSwitcher />
             <button
@@ -79,6 +111,11 @@ export default function CodeRoom({ params }: { params: { id: string } }) {
             >
               <div className="text-sm text-accent">{c.user}</div>
               <div>{c.text}</div>
+                {c.timestamp && (
+                  <span className="text-xs opacity-50">
+                    {new Date(c.timestamp).toLocaleTimeString()}
+                  </span>
+                )}
             </motion.div>
           ))}
         </div>
@@ -87,6 +124,7 @@ export default function CodeRoom({ params }: { params: { id: string } }) {
             className="glass flex-1 rounded p-2"
             value={msg}
             onChange={(e) => setMsg(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && send()}
             placeholder="Type a message"
           />
           <button className="btn-neon px-3 py-2" onClick={send}>

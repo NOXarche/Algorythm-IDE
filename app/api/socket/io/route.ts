@@ -1,59 +1,55 @@
-import { NextRequest } from 'next/server';
-import { Server as NetServer } from 'http';
+import { NextRequest, NextResponse } from 'next/server';
 import { Server as IOServer } from 'socket.io';
-import { NextApiResponse } from 'next';
 
-type SocketServer = {
-  io?: IOServer;
-};
+// Global socket instance to prevent multiple instances
+let io: IOServer | undefined;
 
-const ioHandler = (req: NextRequest) => {
-  return new Response(null, {
-    status: 200
-  });
-};
-
-export const GET = ioHandler;
-
-export const config = {
-  runtime: 'nodejs'
-};
-
-// Patch global to keep single io instance across hot reloads
-let io: IOServer | undefined = (globalThis as unknown as SocketServer).io;
-
-if (!io) {
-  // @ts-ignore - Next.js exposes underlying server at globalThis
-  const httpServer: NetServer | undefined = (global as any)?.server;
-
-  // Fallback: create a detached server if not present (Vercel functions create ephemeral servers)
-  io = new IOServer({
-    path: '/api/socket/io',
-    addTrailingSlash: false,
-    cors: { origin: '*', methods: ['GET', 'POST'] }
-  });
-
-  io.on('connection', (socket) => {
-    socket.on('join', ({ roomId }) => {
-      socket.join(roomId);
+export async function GET(req: NextRequest) {
+  if (!io) {
+    io = new IOServer({
+      path: '/api/socket/io',
+      addTrailingSlash: false,
+      cors: {
+        origin: process.env.NODE_ENV === 'production' 
+          ? ['https://algorhythm5.vercel.app'] 
+          : ['http://localhost:3000'],
+        methods: ['GET', 'POST']
+      }
     });
 
-    socket.on('leave', ({ roomId }) => {
-      socket.leave(roomId);
-    });
+    io.on('connection', (socket) => {
+      console.log('Client connected:', socket.id);
 
-    socket.on('code:update', ({ roomId, code }) => {
-      socket.to(roomId).emit('code:update', code);
-    });
+      socket.on('join', ({ roomId }) => {
+        socket.join(roomId);
+        console.log(`Socket ${socket.id} joined room ${roomId}`);
+      });
 
-    socket.on('chat:new', ({ roomId, user, text }) => {
-      socket.to(roomId).emit('chat:new', { user, text });
-    });
+      socket.on('leave', ({ roomId }) => {
+        socket.leave(roomId);
+        console.log(`Socket ${socket.id} left room ${roomId}`);
+      });
 
-    socket.on('playlist:add', ({ roomId, track }) => {
-      socket.to(roomId).emit('playlist:add', track);
-    });
-  });
+      socket.on('code:update', ({ roomId, code }) => {
+        socket.to(roomId).emit('code:update', code);
+      });
 
-  (globalThis as unknown as SocketServer).io = io;
+      socket.on('chat:new', ({ roomId, user, text }) => {
+        const timestamp = new Date().toISOString();
+        socket.to(roomId).emit('chat:new', { user, text, timestamp });
+      });
+
+      socket.on('playlist:add', ({ roomId, track }) => {
+        socket.to(roomId).emit('playlist:add', track);
+      });
+
+      socket.on('disconnect', () => {
+        console.log('Client disconnected:', socket.id);
+      });
+    });
+  }
+
+  return NextResponse.json({ message: 'Socket.IO server initialized' });
 }
+
+export const POST = GET;
