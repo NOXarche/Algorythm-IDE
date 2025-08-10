@@ -26,9 +26,10 @@
     "next": "15.0.3",
     "next-auth": "5.0.0-beta.25",
     "postcss": "8.4.47",
-    "react": "19.0.0",
-    "react-dom": "19.0.0",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
     "react-hot-toast": "2.4.1",
+    "react-rough-notation": "1.0.5",
     "socket.io": "4.7.5",
     "socket.io-client": "4.7.5",
     "tailwind-merge": "2.5.2",
@@ -38,8 +39,8 @@
   },
   "devDependencies": {
     "@types/node": "20.14.12",
-    "@types/react": "19.0.0",
-    "@types/react-dom": "19.0.0",
+    "@types/react": "18.2.6",
+    "@types/react-dom": "18.2.4",
     "eslint": "9.11.1",
     "eslint-config-next": "15.0.3",
     "typescript": "5.5.4"
