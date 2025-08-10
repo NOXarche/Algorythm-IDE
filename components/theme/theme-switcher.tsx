@@ -6,10 +6,11 @@ export default function ThemeSwitcher() {
   const [mode, setMode] = useState<'dark' | 'light'>('dark');
 
   useEffect(() => {
+    const root = document.documentElement;
     if (mode === 'dark') {
-      document.documentElement.classList.add('dark');
+      root.classList.add('dark');
     } else {
-      document.documentElement.classList.remove('dark');
+      root.classList.remove('dark');
     }
   }, [mode]);
 
