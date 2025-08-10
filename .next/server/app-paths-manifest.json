@@ -4,5 +4,6 @@
   "/code/page": "app/code/page.js",
   "/music/page": "app/music/page.js",
   "/resources/page": "app/resources/page.js",
-  "/themes/page": "app/themes/page.js"
+  "/themes/page": "app/themes/page.js",
+  "/rooms/page": "app/rooms/page.js"
 }
