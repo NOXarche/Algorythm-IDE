@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #0E0E10;
+  --accent: #FF8C32;
+  --accent-light: #FFA63F;
+  --gold: #FFD580;
+}
+
+html, body, :root {
+  height: 100%;
+  background: var(--bg);
+  color: white;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+.glass {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  backdrop-filter: blur(8px);
+}
+
+.btn-neon {
+  background: linear-gradient(135deg, var(--accent), var(--accent-light));
+  box-shadow: 0 0 12px rgba(255, 140, 50, 0.5);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.btn-neon:hover {
+  transform: translateY(-1px) scale(1.01);
+  box-shadow: 0 0 18px rgba(255, 140, 50, 0.6);
+}
+
+a, button {
+  outline: none;
+}
